@@ -687,9 +687,7 @@ unsafe fn get_domain_metadata_impl(
 
     Ok(snapshot
         .get_domain_metadata(&domain, extern_engine.engine().as_ref())?
-        .and_then(|config: String| {
-            allocate_fn(kernel_string_slice!(config))
-        }))
+        .and_then(|config: String| allocate_fn(kernel_string_slice!(config))))
 }
 
 type StringIter = dyn Iterator<Item = String> + Send;
