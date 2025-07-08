@@ -659,7 +659,7 @@ pub unsafe extern "C" fn get_partition_columns(
     iter.into()
 }
 
-/// Get the domainMetadata for a specific domain in this snapshot
+/// Get the domain metadata as an optional string allocated by `AllocatedStringFn` for a specific domain in this snapshot
 ///
 /// # Safety
 ///
@@ -677,7 +677,7 @@ pub unsafe extern "C" fn get_domain_metadata(
     get_domain_metadata_impl(snapshot, domain, engine, allocate_fn).into_extern_result(&engine)
 }
 
-fn get_domain_metadata_impl(
+unsafe fn get_domain_metadata_impl(
     snapshot: &Snapshot,
     domain: KernelStringSlice,
     extern_engine: &dyn ExternEngine,
@@ -685,13 +685,11 @@ fn get_domain_metadata_impl(
 ) -> DeltaResult<NullableCvoid> {
     let domain = unsafe { String::try_from_slice(&domain)? };
 
-    match snapshot.get_domain_metadata(&domain, extern_engine.engine().as_ref())? {
-        Some(config) => {
-            let config = config.as_str();
-            Ok(allocate_fn(kernel_string_slice!(config)))
-        }
-        None => Ok(None.into()),
-    }
+    Ok(snapshot
+        .get_domain_metadata(&domain, extern_engine.engine().as_ref())?
+        .and_then(|config: String| {
+            allocate_fn(kernel_string_slice!(config))
+        }))
 }
 
 type StringIter = dyn Iterator<Item = String> + Send;
@@ -1009,6 +1007,11 @@ mod tests {
         assert!(
             metadata_ptr.is_some(),
             "Should return domain metadata for another domain"
+        );
+        assert_eq!(
+            recover_string(metadata_ptr.unwrap()),
+            "domain-secondcommit",
+            "Domain metadata should be 'domain-secondcommit'"
         );
 
         // Test 4: Test domain metadata removal
