@@ -1,8 +1,8 @@
 use crate::error::{ExternResult, IntoExternResult};
 use crate::handle::Handle;
 use crate::{
-    kernel_string_slice, AllocateStringFn, KernelStringSlice, NullableCvoid, SharedExternEngine, ExternEngine,
-    SharedSnapshot, TryFromStringSlice,
+    kernel_string_slice, AllocateStringFn, ExternEngine, KernelStringSlice, NullableCvoid,
+    SharedExternEngine, SharedSnapshot, TryFromStringSlice,
 };
 use delta_kernel::snapshot::Snapshot;
 use delta_kernel::DeltaResult;
