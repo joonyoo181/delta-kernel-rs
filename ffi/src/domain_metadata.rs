@@ -1,17 +1,17 @@
 use crate::error::{ExternResult, IntoExternResult};
 use crate::handle::Handle;
 use crate::{
-    kernel_string_slice, AllocateStringFn, KernelStringSlice, NullableCvoid, SharedExternEngine,
+    kernel_string_slice, AllocateStringFn, KernelStringSlice, NullableCvoid, SharedExternEngine, ExternEngine,
     SharedSnapshot, TryFromStringSlice,
 };
 use delta_kernel::snapshot::Snapshot;
-use delta_kernel::{DeltaResult, Engine};
+use delta_kernel::DeltaResult;
 
-/// Get domain metadata for a specific domain from a snapshot
+/// Get the domain metadata as an optional string allocated by `AllocatedStringFn` for a specific domain in this snapshot
 ///
 /// # Safety
 ///
-/// Caller is responsible for passing valid handles and domain pointer.
+/// Caller is responsible for passing in a valid handle
 #[no_mangle]
 pub unsafe extern "C" fn get_domain_metadata(
     snapshot: Handle<SharedSnapshot>,
@@ -19,32 +19,23 @@ pub unsafe extern "C" fn get_domain_metadata(
     engine: Handle<SharedExternEngine>,
     allocate_fn: AllocateStringFn,
 ) -> ExternResult<NullableCvoid> {
-    let engine = unsafe { engine.clone_as_arc() };
     let snapshot = unsafe { snapshot.as_ref() };
-    let domain_string: String =
-        unsafe { TryFromStringSlice::try_from_slice(&domain).expect("domain is not null") };
+    let engine = unsafe { engine.as_ref() };
 
-    get_domain_metadata_impl(
-        snapshot,
-        domain_string.as_str(),
-        &*engine.as_ref().engine(),
-        allocate_fn,
-    )
-    .into_extern_result(&engine.as_ref())
+    get_domain_metadata_impl(snapshot, domain, engine, allocate_fn).into_extern_result(&engine)
 }
 
-fn get_domain_metadata_impl(
+unsafe fn get_domain_metadata_impl(
     snapshot: &Snapshot,
-    domain_string: &str,
-    engine: &dyn Engine,
+    domain: KernelStringSlice,
+    extern_engine: &dyn ExternEngine,
     allocate_fn: AllocateStringFn,
 ) -> DeltaResult<NullableCvoid> {
-    let domain_metadata = snapshot.get_domain_metadata(domain_string, engine)?;
+    let domain = unsafe { String::try_from_slice(&domain)? };
 
-    match domain_metadata {
-        Some(metadata) => Ok(allocate_fn(kernel_string_slice!(metadata))),
-        None => Ok(None),
-    }
+    Ok(snapshot
+        .get_domain_metadata(&domain, extern_engine.engine().as_ref())?
+        .and_then(|config: String| allocate_fn(kernel_string_slice!(config))))
 }
 
 #[cfg(test)]
