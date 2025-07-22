@@ -487,7 +487,7 @@ impl CommitInfo {
         Self {
             timestamp: Some(timestamp),
             in_commit_timestamp: None,
-            operation: Some(operation.unwrap_or_else(||UNKNOWN_OPERATION.to_string())),
+            operation: Some(operation.unwrap_or_else(|| UNKNOWN_OPERATION.to_string())),
             operation_parameters: None,
             kernel_version: Some(format!("v{KERNEL_VERSION}")),
             engine_info,
