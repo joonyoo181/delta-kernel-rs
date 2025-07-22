@@ -146,9 +146,9 @@ mod tests {
 
         let get_domain_metadata_helper = |domain: &str| unsafe {
             get_domain_metadata(
-                snapshot.clone_handle(),
+                snapshot.shallow_copy(),
                 kernel_string_slice!(domain),
-                engine_handle.clone_handle(),
+                engine_handle.shallow_copy(),
                 allocate_str,
             )
         };
