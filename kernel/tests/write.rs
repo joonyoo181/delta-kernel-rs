@@ -260,20 +260,6 @@ async fn test_append() -> Result<(), Box<dyn std::error::Error>> {
     )]));
 
     for (table_url, engine, store, table_name) in setup_test_tables(schema.clone(), &[]).await? {
-        let snapshot = Arc::new(Snapshot::try_new(table_url.clone(), &engine, None)?);
-        let mut txn = snapshot
-            .transaction()?
-            .with_engine_info("default engine".to_string());
-
-        // create two new arrow record batches to append
-        let append_data = [[1, 2, 3], [4, 5, 6]].map(|data| -> DeltaResult<_> {
-            let data = RecordBatch::try_new(
-                Arc::new(schema.as_ref().try_into_arrow()?),
-                vec![Arc::new(Int32Array::from(data.to_vec()))],
-            )?;
-            Ok(Box::new(ArrowEngineData::new(data)))
-        });
-
         // write data out by spawning async tasks to simulate executors
         let engine = Arc::new(engine);
         write_data_and_check_result_and_stats(table_url.clone(), schema.clone(), engine.clone(), 1)
@@ -311,7 +297,6 @@ async fn test_append() -> Result<(), Box<dyn std::error::Error>> {
                     "operation": "UNKNOWN",
                     "kernelVersion": format!("v{}", env!("CARGO_PKG_VERSION")),
                     "operationParameters": {},
-                    "engineInfo": "default engine",
                 }
             }),
             json!({
