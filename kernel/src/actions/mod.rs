@@ -495,7 +495,7 @@ impl CommitInfo {
     }
 }
 
-// TODO: implement Scalar::From<HashMap<K, V>> so we can derive IntoEngineData using a macro
+// TODO: implement Scalar::From<HashMap<K, V>> so we can derive IntoEngineData using a macro (issue#1083)
 impl IntoEngineData for CommitInfo {
     fn into_engine_data(
         self,

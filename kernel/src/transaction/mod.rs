@@ -139,9 +139,9 @@ impl Transaction {
             self.engine_info.clone(),
         );
 
-        let commit_info_schema = get_log_commit_info_schema().as_ref().clone();
+        let commit_info_schema = get_log_commit_info_schema().clone();
 
-        let commit_info_action = commit_info.into_engine_data(Arc::new(commit_info_schema), engine);
+        let commit_info_action = commit_info.into_engine_data(commit_info_schema, engine);
         let add_actions = generate_adds(engine, self.add_files_metadata.iter().map(|a| a.as_ref()));
 
         let actions = iter::once(commit_info_action)
@@ -184,8 +184,8 @@ impl Transaction {
     }
 
     /// Set the engine info field of this transaction's commit info action. This field is optional.
-    pub fn with_engine_info(mut self, engine_info: String) -> Self {
-        self.engine_info = Some(engine_info);
+    pub fn with_engine_info(mut self, engine_info: impl Into<String>) -> Self {
+        self.engine_info = Some(engine_info.into());
         self
     }
 
@@ -329,7 +329,7 @@ mod tests {
     use super::*;
     use crate::schema::MapType;
 
-    // TODO: create a finer-grained unit tests for transactions
+    // TODO: create a finer-grained unit tests for transactions (issue#1091)
 
     #[test]
     fn test_add_files_schema() {
