@@ -1,9 +1,17 @@
 //! Utility functions used for tests in this crate.
 
-use crate::error::{EngineError, EngineErrorWithMessage, ExternResult, KernelError};
+use crate::error::{EngineError, ExternResult, KernelError};
 use crate::{KernelStringSlice, NullableCvoid, TryFromStringSlice};
 use std::os::raw::c_void;
 use std::ptr::NonNull;
+
+// Used to allocate EngineErrors with test information from Rust tests
+#[cfg(test)]
+#[repr(C)]
+pub(crate) struct EngineErrorWithMessage {
+    pub(crate) etype: KernelError,
+    pub(crate) message: String,
+}
 
 #[no_mangle]
 pub(crate) extern "C" fn allocate_err(
@@ -13,7 +21,7 @@ pub(crate) extern "C" fn allocate_err(
     let s = unsafe { String::try_from_slice(&message).unwrap() };
     let boxed = Box::new(EngineErrorWithMessage { etype, message: s });
 
-    Box::leak(boxed) as *mut crate::error::EngineErrorWithMessage as *mut EngineError
+    Box::leak(boxed) as *mut EngineErrorWithMessage as *mut EngineError
 }
 
 #[no_mangle]
@@ -24,12 +32,12 @@ pub(crate) extern "C" fn allocate_str(kernel_str: KernelStringSlice) -> Nullable
     Some(ptr)
 }
 
-// helper to recover an error from the above
+// helper to recover an error from `allocate_str`
 pub(crate) unsafe fn recover_error(ptr: *mut EngineError) -> EngineErrorWithMessage {
     *Box::from_raw(ptr as *mut EngineErrorWithMessage)
 }
 
-// helper to recover a string from the above
+// helper to recover a string from `allocate_str`
 pub(crate) fn recover_string(ptr: NonNull<c_void>) -> String {
     let ptr = ptr.as_ptr().cast();
     *unsafe { Box::from_raw(ptr) }

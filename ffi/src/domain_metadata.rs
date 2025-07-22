@@ -21,18 +21,19 @@ pub unsafe extern "C" fn get_domain_metadata(
 ) -> ExternResult<NullableCvoid> {
     let snapshot = unsafe { snapshot.as_ref() };
     let engine = unsafe { engine.as_ref() };
+    let domain = unsafe {
+        String::try_from_slice(&domain).expect("Failed to convert KernelStringSlice to String")
+    };
 
     get_domain_metadata_impl(snapshot, domain, engine, allocate_fn).into_extern_result(&engine)
 }
 
-unsafe fn get_domain_metadata_impl(
+fn get_domain_metadata_impl(
     snapshot: &Snapshot,
-    domain: KernelStringSlice,
+    domain: String,
     extern_engine: &dyn ExternEngine,
     allocate_fn: AllocateStringFn,
 ) -> DeltaResult<NullableCvoid> {
-    let domain = unsafe { String::try_from_slice(&domain)? };
-
     Ok(snapshot
         .get_domain_metadata(&domain, extern_engine.engine().as_ref())?
         .and_then(|config: String| allocate_fn(kernel_string_slice!(config))))
@@ -143,38 +144,25 @@ mod tests {
             ))
         };
 
-        let domain1 = "domain1";
-        let res = unsafe {
-            ok_or_panic(get_domain_metadata(
-                snapshot.clone_handle(),
-                kernel_string_slice!(domain1),
-                engine_handle.clone_handle(),
-                allocate_str,
-            ))
-        };
-        assert!(res.is_none());
-
-        let domain1 = "domain2";
-        let res = unsafe {
-            ok_or_panic(get_domain_metadata(
-                snapshot.clone_handle(),
-                kernel_string_slice!(domain1),
-                engine_handle.clone_handle(),
-                allocate_str,
-            ))
-        };
-        let result = recover_string(res.unwrap());
-        assert_eq!(result, "domain2_commit1");
-
-        let domain1 = "delta.domain3";
-        let res = unsafe {
+        let get_domain_metadata_helper = |domain: &str| unsafe {
             get_domain_metadata(
                 snapshot.clone_handle(),
-                kernel_string_slice!(domain1),
+                kernel_string_slice!(domain),
                 engine_handle.clone_handle(),
                 allocate_str,
             )
         };
+
+        let domain1 = "domain1";
+        let res = ok_or_panic(get_domain_metadata_helper(domain1));
+        assert!(res.is_none());
+
+        let domain2 = "domain2";
+        let res = ok_or_panic(get_domain_metadata_helper(domain2));
+        assert_eq!(recover_string(res.unwrap()), "domain2_commit1");
+
+        let domain3 = "delta.domain3";
+        let res = get_domain_metadata_helper(domain3);
         assert_extern_result_error(res, KernelError::GenericError, "Generic delta kernel error: User DomainMetadata are not allowed to use system-controlled 'delta.*' domain");
 
         Ok(())

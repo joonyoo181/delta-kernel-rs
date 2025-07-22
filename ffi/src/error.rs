@@ -135,14 +135,6 @@ pub struct EngineError {
     pub(crate) etype: KernelError,
 }
 
-// Used to allocate EngineErrors with test information from Rust tests
-#[cfg(test)]
-#[repr(C)]
-pub(crate) struct EngineErrorWithMessage {
-    pub(crate) etype: KernelError,
-    pub(crate) message: String,
-}
-
 /// Semantics: Kernel will always immediately return the leaked engine error to the engine (if it
 /// allocated one at all), and engine is responsible for freeing it.
 #[repr(C)]
