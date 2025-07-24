@@ -14,16 +14,6 @@ pub(crate) struct EngineErrorWithMessage {
 }
 
 #[no_mangle]
-pub(crate) extern "C" fn allocate_err(
-    etype: KernelError,
-    _: KernelStringSlice,
-) -> *mut EngineError {
-    let boxed = Box::new(EngineError { etype });
-    Box::leak(boxed)
-}
-
-// TODO: migrate all test cases to `allocate_err_with_message` for more fine-grained assertion checks (issue#1097)
-#[no_mangle]
 pub(crate) extern "C" fn allocate_err_with_message(
     etype: KernelError,
     message: KernelStringSlice,
@@ -42,21 +32,17 @@ pub(crate) extern "C" fn allocate_str(kernel_str: KernelStringSlice) -> Nullable
     Some(ptr)
 }
 
-// helper to recover an error from `allocate_str`
-pub(crate) unsafe fn recover_error(ptr: *mut EngineError) -> EngineError {
-    *Box::from_raw(ptr)
-}
-
-// helper to recover an error from 'allocate_str_with_message'
+/// Recover an error from 'allocate_str_with_message'
 pub(crate) unsafe fn recover_error_with_message(ptr: *mut EngineError) -> EngineErrorWithMessage {
     *Box::from_raw(ptr as *mut EngineErrorWithMessage)
 }
 
-// helper to recover a string from `allocate_str`
+/// Recover a string from `allocate_str`
 pub(crate) fn recover_string(ptr: NonNull<c_void>) -> String {
     let ptr = ptr.as_ptr().cast();
     *unsafe { Box::from_raw(ptr) }
 }
+
 pub(crate) fn ok_or_panic<T>(result: ExternResult<T>) -> T {
     match result {
         ExternResult::Ok(t) => t,
@@ -66,6 +52,7 @@ pub(crate) fn ok_or_panic<T>(result: ExternResult<T>) -> T {
     }
 }
 
+/// Check error type and message while also recovering the error to prevent leaks
 pub(crate) fn assert_extern_result_error_with_message<T>(
     res: ExternResult<T>,
     expected_etype: KernelError,

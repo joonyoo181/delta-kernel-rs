@@ -780,8 +780,10 @@ impl<T> Default for ReferenceSet<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::KernelError;
     use crate::ffi_test_utils::{
-        allocate_err, allocate_str, ok_or_panic, recover_error, recover_string,
+        allocate_err_with_message, allocate_str, assert_extern_result_error_with_message,
+        ok_or_panic, recover_string,
     };
     use delta_kernel::engine::default::{executor::tokio::TokioBackgroundExecutor, DefaultEngine};
     use delta_kernel::object_store::memory::InMemory;
@@ -805,7 +807,7 @@ mod tests {
     pub(crate) fn get_default_engine() -> Handle<SharedExternEngine> {
         let path = "memory:///doesntmatter/foo";
         let path = kernel_string_slice!(path);
-        let builder = unsafe { ok_or_panic(get_engine_builder(path, allocate_err)) };
+        let builder = unsafe { ok_or_panic(get_engine_builder(path, allocate_err_with_message)) };
         unsafe { ok_or_panic(builder_build(builder)) }
     }
 
@@ -827,7 +829,7 @@ mod tests {
         )
         .await?;
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine = engine_to_handle(Arc::new(engine), allocate_err);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
         let path = "memory:///";
 
         // Test getting latest snapshot
@@ -850,13 +852,7 @@ mod tests {
         // Test getting non-existent snapshot
         let snapshot_at_non_existent_version =
             unsafe { snapshot_at_version(kernel_string_slice!(path), engine.shallow_copy(), 1) };
-        assert!(snapshot_at_non_existent_version.is_err());
-
-        // Avoid leaking the error by recovering it
-        let ExternResult::Err(e) = snapshot_at_non_existent_version else {
-            panic!("Expected error but operation succeeded");
-        };
-        unsafe { recover_error(e) };
+        assert_extern_result_error_with_message(snapshot_at_non_existent_version, KernelError::GenericError, "Generic delta kernel error: LogSegment end version 0 not the same as the specified end version 1");
 
         let table_root = unsafe { snapshot_table_root(snapshot1.shallow_copy(), allocate_str) };
         assert!(table_root.is_some());
@@ -879,7 +875,7 @@ mod tests {
         )
         .await?;
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine = engine_to_handle(Arc::new(engine), allocate_err);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
         let path = "memory:///";
 
         let snapshot =
