@@ -44,7 +44,8 @@ mod tests {
     use super::*;
     use crate::error::KernelError;
     use crate::ffi_test_utils::{
-        allocate_err, allocate_str, assert_extern_result_error, ok_or_panic, recover_string,
+        allocate_err_with_message, allocate_str, assert_extern_result_error_with_message,
+        ok_or_panic, recover_string,
     };
     use crate::{engine_to_handle, kernel_string_slice, snapshot};
     use delta_kernel::engine::default::executor::tokio::TokioBackgroundExecutor;
@@ -55,12 +56,12 @@ mod tests {
     use std::sync::Arc;
     use test_utils::add_commit;
 
-    #[ignore]
+    #[tokio::test]
     async fn test_domain_metadata() -> DeltaResult<()> {
         let storage = Arc::new(InMemory::new());
 
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine_handle = engine_to_handle(Arc::new(engine), allocate_err);
+        let engine_handle = engine_to_handle(Arc::new(engine), allocate_err_with_message);
         let path = "memory:///";
 
         // commit0
@@ -163,7 +164,7 @@ mod tests {
 
         let domain3 = "delta.domain3";
         let res = get_domain_metadata_helper(domain3);
-        assert_extern_result_error(res, KernelError::GenericError, "Generic delta kernel error: User DomainMetadata are not allowed to use system-controlled 'delta.*' domain");
+        assert_extern_result_error_with_message(res, KernelError::GenericError, "Generic delta kernel error: User DomainMetadata are not allowed to use system-controlled 'delta.*' domain");
 
         Ok(())
     }
