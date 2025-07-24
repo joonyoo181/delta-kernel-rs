@@ -28,8 +28,8 @@ pub(crate) extern "C" fn allocate_err_with_message(
     etype: KernelError,
     message: KernelStringSlice,
 ) -> *mut EngineError {
-    let s = unsafe { String::try_from_slice(&message).unwrap() };
-    let boxed = Box::new(EngineErrorWithMessage { etype, message: s });
+    let message = unsafe { String::try_from_slice(&message).unwrap() };
+    let boxed = Box::new(EngineErrorWithMessage { etype, message });
 
     Box::into_raw(boxed) as *mut EngineError
 }
