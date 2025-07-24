@@ -260,7 +260,6 @@ mod tests {
 
     use crate::engine::arrow_conversion::TryFromKernel as _;
     use crate::engine::arrow_data::unshredded_variant_arrow_type;
-    use crate::schema::variant_utils::unshredded_variant_schema;
     use crate::schema::{ArrayType, DataType, MapType, StructField};
 
     use super::*;
@@ -332,13 +331,13 @@ mod tests {
         }
 
         assert!(ensure_data_types(
-            &unshredded_variant_schema(),
+            &DataType::unshredded_variant(),
             &unshredded_variant_arrow_type(),
             true
         )
         .is_ok());
         assert!(ensure_data_types(
-            &unshredded_variant_schema(),
+            &DataType::unshredded_variant(),
             &incorrect_variant_arrow_type(),
             true
         )
@@ -348,13 +347,13 @@ mod tests {
     #[test]
     fn ensure_decimals() {
         assert!(ensure_data_types(
-            &DataType::decimal_unchecked(5, 2),
+            &DataType::decimal(5, 2).unwrap(),
             &ArrowDataType::Decimal128(5, 2),
             false
         )
         .is_ok());
         assert!(ensure_data_types(
-            &DataType::decimal_unchecked(5, 2),
+            &DataType::decimal(5, 2).unwrap(),
             &ArrowDataType::Decimal128(5, 3),
             false
         )
