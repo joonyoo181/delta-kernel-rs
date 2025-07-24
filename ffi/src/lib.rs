@@ -33,6 +33,7 @@ use handle::Handle;
 extern crate self as delta_kernel_ffi;
 
 mod domain_metadata;
+pub use domain_metadata::get_domain_metadata;
 pub mod engine_data;
 pub mod engine_funcs;
 pub mod error;
