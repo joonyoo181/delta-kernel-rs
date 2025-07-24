@@ -21,21 +21,19 @@ pub unsafe extern "C" fn get_domain_metadata(
 ) -> ExternResult<NullableCvoid> {
     let snapshot = unsafe { snapshot.as_ref() };
     let engine = unsafe { engine.as_ref() };
-    let domain = unsafe {
-        String::try_from_slice(&domain).expect("Failed to convert KernelStringSlice to String")
-    };
+    let domain = unsafe { String::try_from_slice(&domain) };
 
     get_domain_metadata_impl(snapshot, domain, engine, allocate_fn).into_extern_result(&engine)
 }
 
 fn get_domain_metadata_impl(
     snapshot: &Snapshot,
-    domain: String,
+    domain: DeltaResult<String>,
     extern_engine: &dyn ExternEngine,
     allocate_fn: AllocateStringFn,
 ) -> DeltaResult<NullableCvoid> {
     Ok(snapshot
-        .get_domain_metadata(&domain, extern_engine.engine().as_ref())?
+        .get_domain_metadata(&domain?, extern_engine.engine().as_ref())?
         .and_then(|config: String| allocate_fn(kernel_string_slice!(config))))
 }
 
