@@ -47,7 +47,7 @@ mod tests {
         allocate_err_with_message, allocate_str, assert_extern_result_error_with_message,
         ok_or_panic, recover_string,
     };
-    use crate::{engine_to_handle, kernel_string_slice, snapshot};
+    use crate::{engine_to_handle, free_engine, free_snapshot, kernel_string_slice, snapshot};
     use delta_kernel::engine::default::executor::tokio::TokioBackgroundExecutor;
     use delta_kernel::engine::default::DefaultEngine;
     use delta_kernel::object_store::memory::InMemory;
@@ -61,7 +61,7 @@ mod tests {
         let storage = Arc::new(InMemory::new());
 
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine_handle = engine_to_handle(Arc::new(engine), allocate_err_with_message);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
         let path = "memory:///";
 
         // commit0
@@ -138,18 +138,14 @@ mod tests {
 
         add_commit(storage.as_ref(), 1, commit).await.unwrap();
 
-        let snapshot = unsafe {
-            ok_or_panic(snapshot(
-                kernel_string_slice!(path),
-                engine_handle.shallow_copy(),
-            ))
-        };
+        let snapshot =
+            unsafe { ok_or_panic(snapshot(kernel_string_slice!(path), engine.shallow_copy())) };
 
         let get_domain_metadata_helper = |domain: &str| unsafe {
             get_domain_metadata(
                 snapshot.shallow_copy(),
                 kernel_string_slice!(domain),
-                engine_handle.shallow_copy(),
+                engine.shallow_copy(),
                 allocate_str,
             )
         };
@@ -165,6 +161,9 @@ mod tests {
         let domain3 = "delta.domain3";
         let res = get_domain_metadata_helper(domain3);
         assert_extern_result_error_with_message(res, KernelError::GenericError, "Generic delta kernel error: User DomainMetadata are not allowed to use system-controlled 'delta.*' domain");
+
+        unsafe { free_snapshot(snapshot) }
+        unsafe { free_engine(engine) }
 
         Ok(())
     }
