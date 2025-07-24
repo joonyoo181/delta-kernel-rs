@@ -14,7 +14,7 @@ pub(crate) struct EngineErrorWithMessage {
 }
 
 #[no_mangle]
-pub(crate) extern "C" fn allocate_err_with_message(
+pub(crate) extern "C" fn allocate_err(
     etype: KernelError,
     message: KernelStringSlice,
 ) -> *mut EngineError {
@@ -32,8 +32,8 @@ pub(crate) extern "C" fn allocate_str(kernel_str: KernelStringSlice) -> Nullable
     Some(ptr)
 }
 
-/// Recover an error from 'allocate_str_with_message'
-pub(crate) unsafe fn recover_error_with_message(ptr: *mut EngineError) -> EngineErrorWithMessage {
+/// Recover an error from 'allocate_err'
+pub(crate) unsafe fn recover_error(ptr: *mut EngineError) -> EngineErrorWithMessage {
     *Box::from_raw(ptr as *mut EngineErrorWithMessage)
 }
 
@@ -60,7 +60,7 @@ pub(crate) fn assert_extern_result_error_with_message<T>(
 ) {
     match res {
         ExternResult::Err(e) => {
-            let error = unsafe { recover_error_with_message(e) };
+            let error = unsafe { recover_error(e) };
             assert_eq!(error.etype, expected_etype);
             assert_eq!(error.message, expected_message);
         }

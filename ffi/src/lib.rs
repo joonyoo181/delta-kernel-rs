@@ -39,12 +39,13 @@ pub mod engine_funcs;
 pub mod error;
 use error::{AllocateError, AllocateErrorFn, ExternResult, IntoExternResult};
 pub mod expressions;
-#[cfg(test)]
-mod ffi_test_utils;
 #[cfg(feature = "tracing")]
 pub mod ffi_tracing;
 pub mod scan;
 pub mod schema;
+
+#[cfg(test)]
+mod ffi_test_utils;
 #[cfg(feature = "test-ffi")]
 pub mod test_ffi;
 
@@ -782,8 +783,8 @@ mod tests {
     use super::*;
     use crate::error::KernelError;
     use crate::ffi_test_utils::{
-        allocate_err_with_message, allocate_str, assert_extern_result_error_with_message,
-        ok_or_panic, recover_string,
+        allocate_err, allocate_str, assert_extern_result_error_with_message, ok_or_panic,
+        recover_string,
     };
     use delta_kernel::engine::default::{executor::tokio::TokioBackgroundExecutor, DefaultEngine};
     use delta_kernel::object_store::memory::InMemory;
@@ -807,7 +808,7 @@ mod tests {
     pub(crate) fn get_default_engine() -> Handle<SharedExternEngine> {
         let path = "memory:///doesntmatter/foo";
         let path = kernel_string_slice!(path);
-        let builder = unsafe { ok_or_panic(get_engine_builder(path, allocate_err_with_message)) };
+        let builder = unsafe { ok_or_panic(get_engine_builder(path, allocate_err)) };
         unsafe { ok_or_panic(builder_build(builder)) }
     }
 
@@ -829,7 +830,7 @@ mod tests {
         )
         .await?;
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err);
         let path = "memory:///";
 
         // Test getting latest snapshot
@@ -875,7 +876,7 @@ mod tests {
         )
         .await?;
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err);
         let path = "memory:///";
 
         let snapshot =

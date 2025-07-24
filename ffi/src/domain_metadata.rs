@@ -42,8 +42,8 @@ mod tests {
     use super::*;
     use crate::error::KernelError;
     use crate::ffi_test_utils::{
-        allocate_err_with_message, allocate_str, assert_extern_result_error_with_message,
-        ok_or_panic, recover_string,
+        allocate_err, allocate_str, assert_extern_result_error_with_message, ok_or_panic,
+        recover_string,
     };
     use crate::{engine_to_handle, free_engine, free_snapshot, kernel_string_slice, snapshot};
     use delta_kernel::engine::default::executor::tokio::TokioBackgroundExecutor;
@@ -59,7 +59,7 @@ mod tests {
         let storage = Arc::new(InMemory::new());
 
         let engine = DefaultEngine::new(storage.clone(), Arc::new(TokioBackgroundExecutor::new()));
-        let engine = engine_to_handle(Arc::new(engine), allocate_err_with_message);
+        let engine = engine_to_handle(Arc::new(engine), allocate_err);
         let path = "memory:///";
 
         // commit0
