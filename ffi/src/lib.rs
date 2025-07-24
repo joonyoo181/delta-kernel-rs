@@ -516,6 +516,9 @@ fn get_default_default_engine_impl(
     get_default_engine_impl(url?, Default::default(), allocate_error)
 }
 
+/// Safety
+///
+/// Caller must free this handle to prevent memory leaks
 #[cfg(feature = "default-engine-base")]
 fn engine_to_handle(
     engine: Arc<dyn Engine>,
