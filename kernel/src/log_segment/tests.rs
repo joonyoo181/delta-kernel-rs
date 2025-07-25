@@ -25,9 +25,7 @@ use crate::scan::test_utils::{
     add_batch_simple, add_batch_with_remove, sidecar_batch_with_given_paths,
 };
 use crate::snapshot::LastCheckpointHint;
-use crate::utils::test_utils::{
-    assert_batch_matches, assert_result_error_with_pattern, Action,
-};
+use crate::utils::test_utils::{assert_batch_matches, assert_result_error_with_pattern, Action};
 use crate::{
     DeltaResult, Engine as _, EngineData, Expression, FileMeta, PredicateRef, RowVisitor, Snapshot,
     StorageHandler,
@@ -459,7 +457,10 @@ fn build_snapshot_with_missing_checkpoint_part_from_hint_fails() {
 
     let log_segment =
         LogSegment::for_snapshot(storage.as_ref(), log_root, checkpoint_metadata, None);
-    assert_result_error_with_pattern(log_segment, "Invalid Checkpoint: Had a _last_checkpoint hint but didn't find any checkpoints")
+    assert_result_error_with_pattern(
+        log_segment,
+        "Invalid Checkpoint: Had a _last_checkpoint hint but didn't find any checkpoints",
+    )
 }
 #[test]
 fn build_snapshot_with_bad_checkpoint_hint_fails() {
@@ -777,7 +778,10 @@ fn test_non_contiguous_log() {
 
     let log_segment_res =
         LogSegment::for_table_changes(storage.as_ref(), log_root.clone(), 1, None);
-    assert_result_error_with_pattern(log_segment_res, "Generic delta kernel error: Expected the first commit to have version 1");
+    assert_result_error_with_pattern(
+        log_segment_res,
+        "Generic delta kernel error: Expected the first commit to have version 1",
+    );
 
     let log_segment_res = LogSegment::for_table_changes(storage.as_ref(), log_root, 0, Some(1));
     assert_result_error_with_pattern(log_segment_res, "Generic delta kernel error: LogSegment end version 0 not the same as the specified end version 1");

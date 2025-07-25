@@ -382,21 +382,27 @@ mod tests {
         )
         .is_ok());
 
-        assert_result_error_with_pattern(ensure_data_types(
-            &DataType::Map(Box::new(MapType::new(
-                DataType::LONG,
-                DataType::STRING,
-                false
-            ))),
-            arrow_field.data_type(),
-            true
-        ), "Generic delta kernel error: Map has nullablily false in kernel and true in arrow");
+        assert_result_error_with_pattern(
+            ensure_data_types(
+                &DataType::Map(Box::new(MapType::new(
+                    DataType::LONG,
+                    DataType::STRING,
+                    false,
+                ))),
+                arrow_field.data_type(),
+                true,
+            ),
+            "Generic delta kernel error: Map has nullablily false in kernel and true in arrow",
+        );
         // ignore the backtrace after the error message
-        assert_result_error_with_pattern(ensure_data_types(
-            &DataType::Map(Box::new(MapType::new(DataType::LONG, DataType::LONG, true))),
-            arrow_field.data_type(),
-            false
-        ), "Invalid argument error: Incorrect datatype. Expected long, got Utf8.*");
+        assert_result_error_with_pattern(
+            ensure_data_types(
+                &DataType::Map(Box::new(MapType::new(DataType::LONG, DataType::LONG, true))),
+                arrow_field.data_type(),
+                false,
+            ),
+            "Invalid argument error: Incorrect datatype. Expected long, got Utf8.*",
+        );
     }
 
     #[test]
@@ -408,16 +414,22 @@ mod tests {
         )
         .is_ok());
         // ignore the backtrace after the error message
-        assert_result_error_with_pattern(ensure_data_types(
-            &DataType::Array(Box::new(ArrayType::new(DataType::STRING, true))),
-            &ArrowDataType::new_list(ArrowDataType::Int64, true),
-            false
-        ), "Invalid argument error: Incorrect datatype. Expected Utf8, got Int64.*");
-        assert_result_error_with_pattern(ensure_data_types(
-            &DataType::Array(Box::new(ArrayType::new(DataType::LONG, true))),
-            &ArrowDataType::new_list(ArrowDataType::Int64, false),
-            true
-        ), "Generic delta kernel error: List has nullablily true in kernel and false in arrow");
+        assert_result_error_with_pattern(
+            ensure_data_types(
+                &DataType::Array(Box::new(ArrayType::new(DataType::STRING, true))),
+                &ArrowDataType::new_list(ArrowDataType::Int64, true),
+                false,
+            ),
+            "Invalid argument error: Incorrect datatype. Expected Utf8, got Int64.*",
+        );
+        assert_result_error_with_pattern(
+            ensure_data_types(
+                &DataType::Array(Box::new(ArrayType::new(DataType::LONG, true))),
+                &ArrowDataType::new_list(ArrowDataType::Int64, false),
+                true,
+            ),
+            "Generic delta kernel error: List has nullablily true in kernel and false in arrow",
+        );
     }
 
     #[test]
@@ -477,10 +489,13 @@ mod tests {
             ]),
             true,
         );
-        assert_result_error_with_pattern(ensure_data_types(
-            &kernel_simple,
-            arrow_nullable_mismatch_simple.data_type(),
-            true
-        ), "Generic delta kernel error: w has nullablily true in kernel and false in arrow");
+        assert_result_error_with_pattern(
+            ensure_data_types(
+                &kernel_simple,
+                arrow_nullable_mismatch_simple.data_type(),
+                true,
+            ),
+            "Generic delta kernel error: w has nullablily true in kernel and false in arrow",
+        );
     }
 }

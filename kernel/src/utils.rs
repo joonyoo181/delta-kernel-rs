@@ -158,8 +158,8 @@ pub(crate) mod test_utils {
     use crate::arrow::datatypes::{DataType, Field, Schema as ArrowSchema};
     use crate::engine::arrow_data::ArrowEngineData;
     use crate::engine::sync::SyncEngine;
+    use crate::Engine;
     use crate::EngineData;
-    use crate::{Engine};
 
     use crate::object_store::local::LocalFileSystem;
     use crate::object_store::ObjectStore;
@@ -279,13 +279,8 @@ pub(crate) mod test_utils {
         match res {
             Ok(_) => panic!("Expected error, but got Ok result"),
             Err(error) => {
-                // If pattern contains .*, don't add anchors and make . match newlines
-                // This is useful for messages that contain backtraces and we want to ignore them (e.g. arrow_utils)
-                let pattern = if message_pattern.contains(".*") {
-                    format!("(?s){}", message_pattern)
-                } else {
-                    format!("^{}$", message_pattern)
-                };
+                // Add ^ and $ to enforce exact matching, (?s) to enables . to match newlines
+                let pattern = format!("(?s)^{}$", message_pattern);
                 let re = regex::Regex::new(&pattern).expect("Invalid regex pattern");
 
                 let error_str = error.to_string();

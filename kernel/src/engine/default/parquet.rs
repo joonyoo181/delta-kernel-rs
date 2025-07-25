@@ -601,8 +601,11 @@ mod tests {
             .unwrap(),
         ));
 
-        assert_result_error_with_pattern(parquet_handler
-            .write_parquet(&Url::parse("memory:///data").unwrap(), data)
-            .await, "Generic delta kernel error: Path must end with a trailing slash: memory:///data");
+        assert_result_error_with_pattern(
+            parquet_handler
+                .write_parquet(&Url::parse("memory:///data").unwrap(), data)
+                .await,
+            "Generic delta kernel error: Path must end with a trailing slash: memory:///data",
+        );
     }
 }

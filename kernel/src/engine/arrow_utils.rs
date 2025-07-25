@@ -1102,8 +1102,11 @@ mod tests {
         ]));
         let res = get_requested_indices(&requested_schema, &parquet_schema);
         // ignore the backtrace after the error message
-        assert_result_error_with_pattern(res, "Invalid argument error: Incorrect datatype. Expected integer, got Utf8.*");
-        
+        assert_result_error_with_pattern(
+            res,
+            "Invalid argument error: Incorrect datatype. Expected integer, got Utf8.*",
+        );
+
         let requested_schema = Arc::new(StructType::new([
             StructField::not_null("i", DataType::INTEGER),
             StructField::nullable("s", DataType::STRING),
@@ -1114,7 +1117,10 @@ mod tests {
         ]));
         let res = get_requested_indices(&requested_schema, &parquet_schema);
         // ignore the backtrace after the error message
-        assert_result_error_with_pattern(res, "Invalid argument error: Incorrect datatype. Expected integer, got Utf8.*");
+        assert_result_error_with_pattern(
+            res,
+            "Invalid argument error: Incorrect datatype. Expected Utf8, got Int32.*",
+        );
     }
 
     #[test]
