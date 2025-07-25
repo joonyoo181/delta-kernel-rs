@@ -20,6 +20,7 @@ use crate::kernel_predicates::{
 };
 use crate::schema::{ArrayType, DataType as KernelDataType, MapType, StructField, StructType};
 use crate::EvaluationHandlerExtension as _;
+use crate::utils::test_utils::assert_result_error_with_pattern;
 
 use Expression as Expr;
 use Predicate as Pred;
@@ -79,11 +80,7 @@ fn test_bad_right_type_array() {
 
     let in_result = evaluate_predicate(&in_op, &batch, false);
 
-    assert!(in_result.is_err());
-    assert_eq!(
-        in_result.unwrap_err().to_string(),
-        "Invalid expression evaluation: Cannot cast to list array: Int32"
-    );
+    assert_result_error_with_pattern(in_result, "Invalid expression evaluation: Cannot cast to list array: Int32");
 }
 
 #[test]
@@ -260,11 +257,7 @@ fn test_invalid_array_sides() {
 
     let in_result = evaluate_predicate(&in_op, &batch, false);
 
-    assert!(in_result.is_err());
-    assert_eq!(
-            in_result.unwrap_err().to_string(),
-            "Invalid expression evaluation: Invalid right value for (NOT) IN comparison, left is: Column(item) right is: Column(item)".to_string()
-        )
+    assert_result_error_with_pattern(in_result, "Invalid expression evaluation: Invalid right value for \\(NOT\\) IN comparison, left is: Column\\(item\\) right is: Column\\(item\\)");
 }
 
 #[test]
@@ -691,7 +684,7 @@ fn test_null_row_err() {
         KernelDataType::STRING,
     )]));
     let handler = ArrowEvaluationHandler;
-    assert!(handler.null_row(not_null_schema).is_err());
+    assert_result_error_with_pattern(handler.null_row(not_null_schema), "Invalid argument error: Column 'a' is declared as non-nullable but contains null values.*");
 }
 
 // helper to take values/schema to pass to `create_one` and assert the result = expected
@@ -830,7 +823,7 @@ fn test_create_one_not_null_struct() {
         ]),
     )]));
     let handler = ArrowEvaluationHandler;
-    assert!(handler.create_one(schema, values).is_err());
+    assert_result_error_with_pattern(handler.create_one(schema, values), "Invalid struct data: Top-level nulls in struct are not supported");
 }
 
 #[test]

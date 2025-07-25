@@ -158,8 +158,8 @@ pub(crate) mod test_utils {
     use crate::arrow::datatypes::{DataType, Field, Schema as ArrowSchema};
     use crate::engine::arrow_data::ArrowEngineData;
     use crate::engine::sync::SyncEngine;
-    use crate::Engine;
     use crate::EngineData;
+    use crate::{Engine};
 
     use crate::object_store::local::LocalFileSystem;
     use crate::object_store::ObjectStore;
@@ -270,6 +270,33 @@ pub(crate) mod test_utils {
         ]
         .into();
         parse_json_batch(json_strings)
+    }
+
+    pub(crate) fn assert_result_error_with_pattern<T, E: ToString>(
+        res: Result<T, E>,
+        message_pattern: &str,
+    ) {
+        match res {
+            Ok(_) => panic!("Expected error, but got Ok result"),
+            Err(error) => {
+                // If pattern contains .*, don't add anchors and make . match newlines
+                // This is useful for messages that contain backtraces and we want to ignore them (e.g. arrow_utils)
+                let pattern = if message_pattern.contains(".*") {
+                    format!("(?s){}", message_pattern)
+                } else {
+                    format!("^{}$", message_pattern)
+                };
+                let re = regex::Regex::new(&pattern).expect("Invalid regex pattern");
+
+                let error_str = error.to_string();
+                assert!(
+                    re.is_match(&error_str),
+                    "Error message does not match pattern.\nExpected pattern: {}\nActual message: {}",
+                    message_pattern,
+                    error_str
+                );
+            }
+        }
     }
 }
 

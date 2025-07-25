@@ -803,6 +803,7 @@ mod tests {
         engine::arrow_expression::ArrowEvaluationHandler,
         schema::{ArrayType, DataType, MapType, StructField},
         Engine, EvaluationHandler, JsonHandler, ParquetHandler, StorageHandler,
+        utils::test_utils::assert_result_error_with_pattern,
     };
 
     // duplicated
@@ -1115,7 +1116,7 @@ mod tests {
             Some([ReaderFeature::V2Checkpoint]),
         )
         .unwrap();
-        assert!(protocol.ensure_read_supported().is_err());
+        assert_result_error_with_pattern(protocol.ensure_read_supported(), "Unsupported: Unsupported minimum reader version 4")
     }
 
     #[test]
@@ -1195,7 +1196,7 @@ mod tests {
             Some([WriterFeature::RowTracking]),
         )
         .unwrap();
-        assert!(protocol.ensure_write_supported().is_err());
+        assert_result_error_with_pattern(protocol.ensure_write_supported(), r#"Unsupported: Unknown WriterFeatures: "rowTracking". Supported WriterFeatures: "appendOnly", "deletionVectors", "invariants", "timestampNtz", "variantType", "variantType-preview", "variantShredding-preview""#);
     }
 
     #[test]
