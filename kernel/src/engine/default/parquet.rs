@@ -409,7 +409,7 @@ mod tests {
 
     use itertools::Itertools;
 
-    use crate::utils::test_utils::assert_result_error_with_pattern;
+    use crate::utils::test_utils::assert_result_error_with_message;
 
     use super::*;
 
@@ -601,7 +601,7 @@ mod tests {
             .unwrap(),
         ));
 
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             parquet_handler
                 .write_parquet(&Url::parse("memory:///data").unwrap(), data)
                 .await,

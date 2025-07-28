@@ -19,7 +19,7 @@ use crate::kernel_predicates::{
     IndirectDataSkippingPredicateEvaluator,
 };
 use crate::schema::{ArrayType, DataType as KernelDataType, MapType, StructField, StructType};
-use crate::utils::test_utils::assert_result_error_with_pattern;
+use crate::utils::test_utils::assert_result_error_with_message;
 use crate::EvaluationHandlerExtension as _;
 
 use Expression as Expr;
@@ -80,7 +80,7 @@ fn test_bad_right_type_array() {
 
     let in_result = evaluate_predicate(&in_op, &batch, false);
 
-    assert_result_error_with_pattern(
+    assert_result_error_with_message(
         in_result,
         "Invalid expression evaluation: Cannot cast to list array: Int32",
     );
@@ -260,7 +260,7 @@ fn test_invalid_array_sides() {
 
     let in_result = evaluate_predicate(&in_op, &batch, false);
 
-    assert_result_error_with_pattern(in_result, "Invalid expression evaluation: Invalid right value for \\(NOT\\) IN comparison, left is: Column\\(item\\) right is: Column\\(item\\)");
+    assert_result_error_with_message(in_result, "Invalid expression evaluation: Invalid right value for (NOT) IN comparison, left is: Column(item) right is: Column(item)");
 }
 
 #[test]
@@ -687,9 +687,9 @@ fn test_null_row_err() {
         KernelDataType::STRING,
     )]));
     let handler = ArrowEvaluationHandler;
-    assert_result_error_with_pattern(
+    assert_result_error_with_message(
         handler.null_row(not_null_schema),
-        "Invalid argument error: Column 'a' is declared as non-nullable but contains null values.*",
+        "Invalid argument error: Column 'a' is declared as non-nullable but contains null values",
     );
 }
 
@@ -829,7 +829,7 @@ fn test_create_one_not_null_struct() {
         ]),
     )]));
     let handler = ArrowEvaluationHandler;
-    assert_result_error_with_pattern(
+    assert_result_error_with_message(
         handler.create_one(schema, values),
         "Invalid struct data: Top-level nulls in struct are not supported",
     );

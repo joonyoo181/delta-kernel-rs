@@ -854,7 +854,7 @@ mod tests {
     };
 
     use crate::schema::{ArrayType, DataType, MapType, StructField, StructType};
-    use crate::utils::test_utils::assert_result_error_with_pattern;
+    use crate::utils::test_utils::assert_result_error_with_message;
 
     use super::*;
 
@@ -1101,10 +1101,9 @@ mod tests {
             ArrowField::new("s", ArrowDataType::Utf8, true),
         ]));
         let res = get_requested_indices(&requested_schema, &parquet_schema);
-        // ignore the backtrace after the error message
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             res,
-            "Invalid argument error: Incorrect datatype. Expected integer, got Utf8.*",
+            "Invalid argument error: Incorrect datatype. Expected integer, got Utf8",
         );
 
         let requested_schema = Arc::new(StructType::new([
@@ -1116,10 +1115,9 @@ mod tests {
             ArrowField::new("s", ArrowDataType::Int32, true),
         ]));
         let res = get_requested_indices(&requested_schema, &parquet_schema);
-        // ignore the backtrace after the error message
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             res,
-            "Invalid argument error: Incorrect datatype. Expected Utf8, got Int32.*",
+            "Invalid argument error: Incorrect datatype. Expected Utf8, got Int32",
         );
     }
 

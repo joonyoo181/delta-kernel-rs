@@ -353,7 +353,7 @@ mod test {
     use crate::actions::{Metadata, Protocol};
     use crate::table_features::{ReaderFeature, WriterFeature};
     use crate::table_properties::TableProperties;
-    use crate::utils::test_utils::assert_result_error_with_pattern;
+    use crate::utils::test_utils::assert_result_error_with_message;
     use crate::Error;
 
     use super::TableConfiguration;
@@ -616,7 +616,7 @@ mod test {
             table_root.clone(),
             0,
         );
-        assert_result_error_with_pattern(result, "Unsupported: Table contains TIMESTAMP_NTZ columns but does not have the required 'timestampNtz' feature in reader and writer features");
+        assert_result_error_with_message(result, "Unsupported: Table contains TIMESTAMP_NTZ columns but does not have the required 'timestampNtz' feature in reader and writer features");
 
         let result = TableConfiguration::try_new(
             metadata,
@@ -663,7 +663,7 @@ mod test {
             table_root.clone(),
             0,
         );
-        assert_result_error_with_pattern(result, "Unsupported: Table contains VARIANT columns but does not have the required 'variantType' feature in reader and writer features");
+        assert_result_error_with_message(result, "Unsupported: Table contains VARIANT columns but does not have the required 'variantType' feature in reader and writer features");
 
         let result =
             TableConfiguration::try_new(metadata, protocol_with_variant_features, table_root, 0);

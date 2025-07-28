@@ -692,7 +692,7 @@ mod tests {
     use std::f32::consts::PI;
 
     use crate::expressions::{column_expr, BinaryPredicateOp};
-    use crate::utils::test_utils::assert_result_error_with_pattern;
+    use crate::utils::test_utils::assert_result_error_with_message;
     use crate::{Expression as Expr, Predicate as Pred};
 
     use super::*;
@@ -877,7 +877,7 @@ mod tests {
 
     #[test]
     fn test_invalid_array() {
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             ArrayData::try_new(
                 ArrayType::new(DataType::INTEGER, false),
                 [Scalar::Integer(1), Scalar::String("s".to_string())],
@@ -885,7 +885,7 @@ mod tests {
             "Schema error: Array scalar type mismatch: expected integer, got string",
         );
 
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             ArrayData::try_new(ArrayType::new(DataType::INTEGER, false), [1.into(), None]),
             "Schema error: Array element cannot be null for non-nullable array",
         );
@@ -894,13 +894,13 @@ mod tests {
     #[test]
     fn test_invalid_map() {
         // incorrect schema
-        assert_result_error_with_pattern(MapData::try_new(
+        assert_result_error_with_message(MapData::try_new(
             MapType::new(DataType::STRING, DataType::INTEGER, false),
             [(Scalar::Integer(1), Scalar::String("s".to_string())),],
         ), "Schema error: Map scalar type mismatch: expected key type string, got key type integer");
 
         // key must be non-null
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             MapData::try_new(
                 MapType::new(DataType::STRING, DataType::STRING, true),
                 [(
@@ -912,7 +912,7 @@ mod tests {
         );
 
         // val must be non-null if we have value_contains_null = false
-        assert_result_error_with_pattern(
+        assert_result_error_with_message(
             MapData::try_new(
                 MapType::new(DataType::STRING, DataType::STRING, false),
                 [(
