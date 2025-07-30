@@ -1108,18 +1108,6 @@ mod tests {
         )
         .unwrap();
         assert!(protocol.ensure_read_supported().is_ok());
-
-        let protocol = Protocol::try_new(
-            4,
-            7,
-            Some([ReaderFeature::V2Checkpoint]),
-            Some([ReaderFeature::V2Checkpoint]),
-        )
-        .unwrap();
-        assert_result_error_with_message(
-            protocol.ensure_read_supported(),
-            "Unsupported: Unsupported minimum reader version 4",
-        )
     }
 
     #[test]

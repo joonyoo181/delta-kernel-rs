@@ -494,7 +494,11 @@ fn build_snapshot_with_bad_checkpoint_hint_fails() {
 
     let log_segment =
         LogSegment::for_snapshot(storage.as_ref(), log_root, checkpoint_metadata, None);
-    assert_result_error_with_message(log_segment, "Invalid Checkpoint: _last_checkpoint indicated that checkpoint should have 1 parts, but it has 2")
+    assert_result_error_with_message(
+        log_segment,
+        "Invalid Checkpoint: _last_checkpoint indicated that checkpoint should have 1 parts, but \
+        it has 2",
+    )
 }
 
 #[test]
@@ -773,7 +777,10 @@ fn test_non_contiguous_log() {
     let log_segment_res =
         LogSegment::for_table_changes(storage.as_ref(), log_root.clone(), 0, None);
     // check the error message up to the timestamp
-    let expected_error_pattern = r#"Generic delta kernel error: Expected ordered contiguous commit files [ParsedLogPath { location: FileMeta { location: Url { scheme: "memory", cannot_be_a_base: false, username: "", password: None, host: None, port: None, path: "/_delta_log/00000000000000000000.json", query: None, fragment: None }, last_modified:"#;
+    let expected_error_pattern = "Generic delta kernel error: Expected ordered contiguous \
+        commit files [ParsedLogPath { location: FileMeta { location: Url { scheme: \"memory\", \
+        cannot_be_a_base: false, username: \"\", password: None, host: None, port: None, path: \
+        \"/_delta_log/00000000000000000000.json\", query: None, fragment: None }, last_modified:";
     assert_result_error_with_message(log_segment_res, expected_error_pattern);
 
     let log_segment_res =
@@ -784,7 +791,11 @@ fn test_non_contiguous_log() {
     );
 
     let log_segment_res = LogSegment::for_table_changes(storage.as_ref(), log_root, 0, Some(1));
-    assert_result_error_with_message(log_segment_res, "Generic delta kernel error: LogSegment end version 0 not the same as the specified end version 1");
+    assert_result_error_with_message(
+        log_segment_res,
+        "Generic delta kernel error: LogSegment end version 0 not the same as the specified end \
+        version 1",
+    );
 }
 
 #[test]
