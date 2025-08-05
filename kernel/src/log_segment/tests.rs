@@ -2031,5 +2031,17 @@ fn test_listed_log_files_contiguous_commit_files() {
         None,
     );
 
-    assert!(res.is_err());
+    assert_result_error_with_message(
+        res,
+        "Generic delta kernel error: Expected ordered \
+        contiguous commit files [ParsedLogPath { location: FileMeta { location: Url { scheme: \
+        \"file\", cannot_be_a_base: false, username: \"\", password: None, host: None, port: \
+        None, path: \"/00000000000000000001.json\", query: None, fragment: None }, last_modified: \
+        0, size: 0 }, filename: \"00000000000000000001.json\", extension: \"json\", version: 1, \
+        file_type: Commit }, ParsedLogPath { location: FileMeta { location: Url { scheme: \
+        \"file\", cannot_be_a_base: false, username: \"\", password: None, host: None, port: \
+        None, path: \"/00000000000000000003.json\", query: None, fragment: None }, last_modified: \
+        0, size: 0 }, filename: \"00000000000000000003.json\", extension: \"json\", version: 3, \
+        file_type: Commit }]",
+    );
 }

@@ -587,6 +587,7 @@ pub(crate) struct ListedLogFiles {
 }
 
 impl ListedLogFiles {
+    // TODO: enforce the usage of this construct to enforce the assertion (issue#1143)
     #[internal_api]
     pub(crate) fn try_new(
         ascending_commit_files: Vec<ParsedLogPath>,
