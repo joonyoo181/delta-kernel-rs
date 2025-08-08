@@ -57,7 +57,7 @@ impl FilesApiHttpClient {
     //     })
     // }
 
-    pub fn try_new(workspace_url: &str, user_id: &str, user_name: &str, org_id: &str, account_id: &str) -> AnyhowResult<Self> {
+    pub fn try_new(workspace_url: &str, user_id: &str, user_name: &str, org_id: &str, account_id: &str, bearer_token: &str) -> AnyhowResult<Self> {
         let mut auth_headers = HashMap::new();
         auth_headers.insert(
             "X-Databricks-User-Id".to_string(), 
@@ -74,6 +74,14 @@ impl FilesApiHttpClient {
         auth_headers.insert(
             "X-Databricks-Account-Id".to_string(), 
             account_id.to_string()
+        );
+        auth_headers.insert(
+            "X-Databricks-System-User".to_string(),
+            true.to_string()
+        );
+        auth_headers.insert(
+            "Authorization".to_string(),
+            format!("Bearer {}", bearer_token)
         );
 
         let client = Client::builder()
@@ -96,6 +104,8 @@ impl FilesApiHttpClient {
             .headers(self.build_headers(None)?)
             .send()
             .await?;
+
+        println!("[INFO][INFO][INFO]RESPONSE FROM RUST: {:?}", response);
 
         match response.status() {
             StatusCode::OK
@@ -303,6 +313,14 @@ impl ObjectStore for FilesApiHttpClient {
             let error_msg = err.to_string().to_lowercase();
             match error_msg {
                 msg if msg.contains("404") => ObjectStoreError::NotFound {
+                    path: location.to_string(),
+                    source: err.into(),
+                },
+                msg if msg.contains("401") => ObjectStoreError::Unauthenticated {
+                    path: location.to_string(),
+                    source: err.into(),
+                },
+                msg if msg.contains("403") => ObjectStoreError::PermissionDenied {
                     path: location.to_string(),
                     source: err.into(),
                 },

@@ -72,7 +72,7 @@ impl TableConfiguration {
         table_root: Url,
         version: Version,
     ) -> DeltaResult<Self> {
-        protocol.ensure_read_supported()?;
+//         protocol.ensure_read_supported()?;
 
         let schema = Arc::new(metadata.parse_schema()?);
         let table_properties = metadata.parse_table_properties();
