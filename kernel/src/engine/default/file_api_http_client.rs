@@ -1,10 +1,13 @@
 use async_trait::async_trait;
 use bytes::Bytes;
-use reqwest::{Client, Response, StatusCode};
+use reqwest::{Client, Response, StatusCode, Identity, Certificate};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::time::Duration;
+use std::fs::{File, exists};
+use std::io::Read;
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use url::Url;
 
 use anyhow::{anyhow, Result as AnyhowResult};
@@ -57,22 +60,55 @@ impl FilesApiHttpClient {
     //     })
     // }
 
+    fn list_directory_contents(dir: &std::path::Path) -> AnyhowResult<()> {
+        // Check if the provided path is a directory.
+        if !dir.is_dir() {
+            return Err(anyhow!("'{}' is not a directory.", dir.display()));
+        }
+
+        // Read the directory entries. The '?' operator propagates errors.
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?; // Unwrap the Result for each entry.
+            let file_name = entry.file_name(); // Get the file name as an OsString.
+
+            // Convert the OsString to a String for printing. Handle potential errors
+            // if the file name is not valid UTF-8.
+            let file_name_str = file_name.to_string_lossy();
+            tracing::info!("{}", file_name_str);
+        }
+
+        Ok(()) // Return Ok(()) on success.
+    }
+
+    fn resolve_first_ip(host: &str, port: u16) -> std::io::Result<IpAddr> {
+        // Do a normal getaddrinfo on "filesystem:9337"
+        // Prefer IPv4 if present; otherwise take the first result.
+        let mut ipv6: Option<IpAddr> = None;
+        for sa in (host, port).to_socket_addrs()? {
+            match sa.ip() {
+                IpAddr::V4(v4) => return Ok(IpAddr::V4(v4)),
+                IpAddr::V6(v6) => if ipv6.is_none() { ipv6 = Some(IpAddr::V6(v6)); }
+            }
+        }
+        ipv6.ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "no A/AAAA records"))
+    }
+
     pub fn try_new(workspace_url: &str, user_id: &str, user_name: &str, org_id: &str, account_id: &str, bearer_token: &str) -> AnyhowResult<Self> {
         let mut auth_headers = HashMap::new();
         auth_headers.insert(
-            "X-Databricks-User-Id".to_string(), 
+            "X-Databricks-User-Id".to_string(),
             user_id.to_string()
         );
         auth_headers.insert(
-            "X-Databricks-User-Name".to_string(), 
+            "X-Databricks-User-Name".to_string(),
             user_name.to_string()
         );
         auth_headers.insert(
-            "X-Databricks-Org-Id".to_string(), 
+            "X-Databricks-Org-Id".to_string(),
             org_id.to_string()
         );
         auth_headers.insert(
-            "X-Databricks-Account-Id".to_string(), 
+            "X-Databricks-Account-Id".to_string(),
             account_id.to_string()
         );
         auth_headers.insert(
@@ -84,28 +120,72 @@ impl FilesApiHttpClient {
             format!("Bearer {}", bearer_token)
         );
 
+        // let id = Identity::from_pkcs12_der(&std::fs::read("/databricks/secrets/keystore.jks")?, store_password)?;
+//
+//         let dir_path = std::path::Path::new("/databricks/secrets/");
+//         Self::list_directory_contents(&dir_path);
+
+        // Load identity (client cert + private key)
+        tracing::info!("Reading certificate.pem");
+        let cert_bytes = std::fs::read("/databricks/secrets/certificate.pem")?;
+        tracing::info!("Reading certificate.key");
+        let key_bytes  = std::fs::read("/databricks/secrets/certificate.key")?;
+        let mut identity_pem = Vec::new();
+        identity_pem.extend_from_slice(&cert_bytes);
+        identity_pem.extend_from_slice(&key_bytes);
+
+        tracing::info!("Loading identity (client cert + private key)");
+        let id = Identity::from_pem(&identity_pem)?;
+
+        // Load CA to trust the server
+        tracing::info!("Reading ca.crt");
+        let ca_bytes = std::fs::read("/databricks/secrets/ca.crt")?;
+        tracing::info!("Loading certificate (ca.crt)");
+        let ca = Certificate::from_pem(&ca_bytes)?;
+
+        // Resolve filesystem to an IP addr
+        tracing::info!("Resolving filesystem.service to an ");
+        let ip = Self::resolve_first_ip("filesystem", 9337)?;
+        let mapped = SocketAddr::new(ip, 9337);
+
+        tracing::info!("Building client");
         let client = Client::builder()
+            .resolve("filesystem.service", mapped)
+            .use_rustls_tls()
+            .identity(id)
+            .add_root_certificate(ca)
             .timeout(Duration::from_secs(300)) // 5 minute timeout
             .build()?;
+        tracing::info!("Built the client");
 
         Ok(Self {
             client,
-            workspace_url: workspace_url.to_string(), 
+            workspace_url: workspace_url.to_string(),
             auth_headers,
         })
     }
 
     pub async fn get_file(&self, path: &str) -> AnyhowResult<Bytes> {
         let url = self.get_files_url(path);
+        tracing::info!("Sending HTTP request to: {:#?}", url);
 
-        let response = self
+        let response = match self
             .client
             .get(&url)
             .headers(self.build_headers(None)?)
             .send()
-            .await?;
-
-        println!("[INFO][INFO][INFO]RESPONSE FROM RUST: {:?}", response);
+            .await
+        {
+            Ok(response) => {
+                tracing::info!("Received HTTP response back:: {} {}", response.status(), url);
+                response
+            }
+            Err(e) => {
+                tracing::error!("Failed HTTP request for URL {}: {:?}", url, e);
+                tracing::error!("Request details - method: GET, headers: {:?}", self.auth_headers);
+                return Err(e.into());
+            }
+        };
 
         match response.status() {
             StatusCode::OK
