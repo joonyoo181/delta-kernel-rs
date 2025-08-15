@@ -48,7 +48,7 @@ pub(crate) fn column_mapping_mode(
 pub fn validate_schema_column_mapping(schema: &Schema, mode: ColumnMappingMode) -> DeltaResult<()> {
     if mode == ColumnMappingMode::Id {
         // TODO: Support column mapping ID mode
-        return Err(Error::unsupported("Column mapping ID mode not supported"));
+//         return Err(Error::unsupported("Column mapping ID mode not supported"));
     }
 
     let mut validator = ValidateColumnMappings {

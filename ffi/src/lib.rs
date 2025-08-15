@@ -519,6 +519,38 @@ fn get_default_default_engine_impl(
     get_default_engine_impl(url?, Default::default(), allocate_error)
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn get_file_io_engine(
+    allocate_error: AllocateErrorFn,
+    workspace_url: KernelStringSlice,
+    user_id: KernelStringSlice,
+    user_name: KernelStringSlice,
+    org_id: KernelStringSlice,
+    account_id: KernelStringSlice,
+    bearer_token: KernelStringSlice,
+) -> ExternResult<Handle<SharedExternEngine>> {
+    let workspace_url = unsafe { String::try_from_slice(&workspace_url) };
+    let user_id = unsafe { String::try_from_slice(&user_id) };
+    let user_name = unsafe { String::try_from_slice(&user_name) };
+    let org_id = unsafe { String::try_from_slice(&org_id) };
+    let account_id = unsafe { String::try_from_slice(&account_id) };
+    let bearer_token = unsafe { String::try_from_slice(&bearer_token) };
+
+    get_file_io_engine_impl(allocate_error, workspace_url, user_id, user_name, org_id, account_id, bearer_token).into_extern_result(&allocate_error)
+}
+
+fn get_file_io_engine_impl(
+    allocate_error: AllocateErrorFn,
+    workspace_url: DeltaResult<String>,
+    user_id: DeltaResult<String>,
+    user_name: DeltaResult<String>,
+    org_id: DeltaResult<String>,
+    account_id: DeltaResult<String>,
+    bearer_token: DeltaResult<String>,
+) -> DeltaResult<Handle<SharedExternEngine>> {
+    get_file_io_default_engine_impl(allocate_error, workspace_url?, user_id?, user_name?, org_id?, account_id?, bearer_token?)
+}
+
 /// Safety
 ///
 /// Caller must free this handle to prevent memory leaks
@@ -548,6 +580,39 @@ fn get_default_engine_impl(
         Arc::new(TokioBackgroundExecutor::new()),
     );
     Ok(engine_to_handle(Arc::new(engine?), allocate_error))
+}
+
+fn get_file_io_default_engine_impl(
+    allocate_error: AllocateErrorFn,
+    workspace_url: String,
+    user_id: String,
+    user_name: String,
+    org_id: String,
+    account_id: String,
+    bearer_token: String
+) -> DeltaResult<Handle<SharedExternEngine>> {
+    use delta_kernel::engine::default::executor::tokio::TokioBackgroundExecutor;
+    use delta_kernel::engine::default::DefaultEngine;
+    use delta_kernel::engine::default::file_api_http_client::FilesApiHttpClient;
+    use delta_kernel::object_store::ObjectStore;
+
+    println!("[INFO][INFO][INFO]TRYING TO CREATE FILES CLIENT");
+    
+    let files_client = FilesApiHttpClient::try_new(
+        &workspace_url,
+        &user_id,
+        &user_name,
+        &org_id,
+        &account_id,
+        &bearer_token
+    ).unwrap();
+    let object_store: Arc<dyn ObjectStore> = Arc::new(files_client);
+
+    let engine = DefaultEngine::new(
+        object_store,
+        Arc::new(TokioBackgroundExecutor::new()),
+    );
+    Ok(engine_to_handle(Arc::new(engine), allocate_error))
 }
 
 /// # Safety
